@@ -1,0 +1,29 @@
+[
+  {
+    "endereco": "Rua das Flores, 123",
+    "cartao": "123456789",
+    "id": 1,
+    "nome": "João Silva",
+    "cpf": "12345678900",
+    "telefone": "38999999999",
+    "email": "joao@email.com"
+  },
+  {
+    "endereco": "Rua dos Mirandas, 46",
+    "cartao": "123456789",
+    "id": 2,
+    "nome": "Alexandre Cunha",
+    "cpf": "14642968636",
+    "telefone": "39999509095",
+    "email": "alexandrebarreto853@email.com"
+  },
+  {
+    "endereco": "Rua B, 456",
+    "cartao": "9876543210987654",
+    "id": 4,
+    "nome": "Maria Souza",
+    "cpf": "22222222222",
+    "telefone": "38988888888",
+    "email": "maria@email.com"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "especialidade": "Musculação",
+    "id": 1,
+    "nome": "João Silva",
+    "cpf": "11111111111",
+    "telefone": "38999999999",
+    "email": "joao@email.com"
+  },
+  {
+    "especialidade": "FitDance",
+    "id": 2,
+    "nome": "Douglas Junior",
+    "cpf": "12309876534",
+    "telefone": "38999123425",
+    "email": "douglas@gmail.com"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "user": "carlos123",
+    "senha": "senha123",
+    "cargo": "Recepcionista",
+    "id": 0,
+    "nome": "Carlos Silva",
+    "cpf": "12345678900",
+    "telefone": "38999999999",
+    "email": "carlos@email.com",
+    "tipo": "FUNCIONARIO"
+  },
+  {
+    "user": "maria",
+    "senha": "5678",
+    "cargo": "Administrador",
+    "id": 2,
+    "nome": "Maria Silva",
+    "cpf": "22222222222",
+    "telefone": "38988888888",
+    "email": "maria@email.com",
+    "tipo": "ADMINISTRADOR"
+  }
+]

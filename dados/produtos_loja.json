@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "descricao": "Camiseta oficial da academia",
+    "nomeProduto": "Camiseta oficial",
+    "preco": 59.9,
+    "categoria": "Vestuário",
+    "setor": "LOJA",
+    "ativo": false
+  },
+  {
+    "id": 2,
+    "descricao": "Proteico do Soro do Leite 900g",
+    "nomeProduto": "Whey Protein Concentrado 80%",
+    "preco": 149.99,
+    "categoria": "Proteinas",
+    "setor": "LOJA",
+    "ativo": true
+  }
+]
