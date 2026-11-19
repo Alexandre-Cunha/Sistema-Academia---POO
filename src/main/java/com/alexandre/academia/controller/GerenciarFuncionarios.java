@@ -1,44 +1,21 @@
+
 package com.alexandre.academia.controller;
 
+import com.alexandre.academia.dao.FuncionarioDAO;
 import com.alexandre.academia.model.Administrador;
 import com.alexandre.academia.model.Funcionario;
-import com.alexandre.academia.dao.FuncionarioDAO;
 
 import java.util.ArrayList;
-import java.util.Scanner;
 
 /**
- * Gerencia o cadastro de funcionários da academia.
+ * Gerencia o cadastro e as operações dos funcionários da academia.
  *
- * <p>O nome de usuário (user) identifica cada funcionário e deve ser
- * único no sistema. As operações básicas de CRUD são delegadas a um
- * {@link CrudGenerico}, enquanto a persistência dos dados em JSON é
- * feita por meio de {@link FuncionarioDAO}.</p>
+ * As operações de CRUD são delegadas ao CrudGenerico, enquanto
+ * a persistência dos dados é realizada pelo FuncionarioDAO.
  *
- * <p>Além do cadastro, da busca e da remoção, a classe oferece métodos
- * interativos para alterar os dados de um funcionário (usuário, senha,
- * nome, cargo, CPF, e-mail e telefone), que leem o novo valor pelo
- * terminal, e também permite verificar e alterar a senha do
- * administrador.</p>
- *
- * <p>Os métodos desta classe exibem mensagens de retorno ao usuário no
- * console ({@code System.out}) para informar o resultado de cada
- * operação.</p>
- *
- * <p>Exemplo de uso:</p>
- * <pre>{@code
- * GerenciarFuncionarios gerenciador = new GerenciarFuncionarios();
- *
- * gerenciador.cadastrarFuncionario(funcionario);
- * Funcionario f = gerenciador.obterFuncionario("maria.silva");
- * gerenciador.alterarSenha(f);
- * }</pre>
+ * A interação com o usuário é responsabilidade das classes de menu.
  *
  * @author Alexandre
- * @see CrudGenerico
- * @see Funcionario
- * @see FuncionarioDAO
- * @see Administrador
  */
 public class GerenciarFuncionarios {
 
@@ -48,29 +25,21 @@ public class GerenciarFuncionarios {
     /** Nomes de usuário já utilizados. */
     private ArrayList<String> usuarios;
 
-    /** Leitura de dados pelo terminal. */
-    private Scanner scanner;
-
     /**
      * Constrói o gerenciador carregando os funcionários salvos.
-     *
-     * <p>Os funcionários são lidos do arquivo JSON por meio de
-     * {@link FuncionarioDAO#importarFuncionariosDoJSON()} e a lista de
-     * nomes de usuário já utilizados é reconstruída a partir deles.
-     * Toda alteração feita posteriormente é gravada com
-     * {@link FuncionarioDAO#exportarFuncionariosParaJSON(ArrayList)}.</p>
      */
     public GerenciarFuncionarios() {
 
         ArrayList<Funcionario> funcionarios =
                 FuncionarioDAO.importarFuncionariosDoJSON();
 
-        crud = new CrudGenerico<>(funcionarios, FuncionarioDAO::exportarFuncionariosParaJSON);
+        crud = new CrudGenerico<>(
+                funcionarios,
+                FuncionarioDAO::exportarFuncionariosParaJSON
+        );
 
-        this.usuarios = new ArrayList<>();
-        this.scanner = new Scanner(System.in);
+        usuarios = new ArrayList<>();
 
-        // Reconstrói a lista de usuários
         for (Funcionario f : crud.listar()) {
             usuarios.add(f.getUser());
         }
@@ -78,9 +47,6 @@ public class GerenciarFuncionarios {
 
     /**
      * Salva as alterações no JSON.
-     *
-     * <p>Chama {@link CrudGenerico#salvarAlteracoes()}, que grava a
-     * lista atual de funcionários por meio do {@link FuncionarioDAO}.</p>
      */
     private void salvarDados() {
         crud.salvarAlteracoes();
@@ -89,15 +55,11 @@ public class GerenciarFuncionarios {
     /**
      * Busca um funcionário pelo nome de usuário.
      *
-     * <p>A comparação é feita com {@code equals}, portanto diferencia
-     * letras maiúsculas e minúsculas.</p>
-     *
-     * @param user nome de usuário do funcionário procurado
-     * @return funcionário encontrado, ou {@code null} se o usuário for
-     *         {@code null} ou se não houver funcionário com esse
-     *         usuário
+     * @param user nome de usuário procurado
+     * @return funcionário encontrado ou null
      */
     public Funcionario obterFuncionario(String user) {
+
         if (user == null) {
             return null;
         }
@@ -112,24 +74,34 @@ public class GerenciarFuncionarios {
     }
 
     /**
-     * Confere se a senha informada é a senha do administrador.
+     * Autentica um administrador utilizando seu usuário e senha.
      *
-     * @param senhaAdm senha a ser verificada
-     * @return {@code true} se a senha não for {@code null} e for igual
-     *         à senha atual do administrador; {@code false} caso
-     *         contrário
-     * @see Administrador#getSenhaAdm()
+     * Além de conferir as credenciais, verifica se o funcionário
+     * encontrado é realmente uma instância de Administrador.
+     *
+     * @param user nome de usuário
+     * @param senha senha informada
+     * @return administrador autenticado ou null se os dados forem inválidos
      */
-    public static boolean verificarSenhaAdm(String senhaAdm) {
-        return senhaAdm != null && senhaAdm.equals(Administrador.getSenhaAdm());
+    public Administrador autenticarAdministrador(String user, String senha) {
+
+        Funcionario funcionario = obterFuncionario(user);
+
+        if (funcionario instanceof Administrador
+                && senha != null
+                && senha.equals(funcionario.getSenha())) {
+
+            return (Administrador) funcionario;
+        }
+
+        return null;
     }
 
     /**
-     * Informa se o nome de usuário já está em uso.
+     * Verifica se um nome de usuário já está cadastrado.
      *
-     * @param user nome de usuário a ser verificado
-     * @return {@code true} se o usuário não for {@code null} e já
-     *         estiver cadastrado; {@code false} caso contrário
+     * @param user nome de usuário
+     * @return true se já estiver cadastrado
      */
     public boolean usuarioCadastrado(String user) {
         return user != null && usuarios.contains(user);
@@ -138,129 +110,87 @@ public class GerenciarFuncionarios {
     /**
      * Cadastra um funcionário.
      *
-     * <p>O cadastro é recusado, com uma mensagem no console, quando o
-     * funcionário é {@code null}, quando o usuário ou a senha são nulos
-     * ou em branco, quando já existe um funcionário com o mesmo usuário
-     * ou quando o {@link CrudGenerico} não consegue cadastrá-lo. Em caso
-     * de sucesso, o ID gerado é exibido.</p>
-     *
      * @param funcionario funcionário a ser cadastrado
+     * @return true se o cadastro for realizado
      */
-    public void cadastrarFuncionario(Funcionario funcionario) {
-        if (funcionario == null || funcionario.getUser() == null || funcionario.getUser().isBlank()) {
-            System.out.println( "Funcionário inválido: o usuário é obrigatório.");
-            return;
-        }
+    public boolean cadastrarFuncionario(Funcionario funcionario) {
 
-        if (funcionario.getSenha() == null || funcionario.getSenha().isBlank()) {
-            System.out.println(
-                    "Funcionário inválido: a senha é obrigatória.");
-            return;
+        if (funcionario == null
+                || funcionario.getUser() == null
+                || funcionario.getUser().isBlank()
+                || funcionario.getSenha() == null
+                || funcionario.getSenha().isBlank()) {
+
+            return false;
         }
 
         if (usuarioCadastrado(funcionario.getUser())) {
-            System.out.println( "Já existe um funcionário com esse usuário.");
-            return;
+            return false;
         }
 
         if (crud.cadastrar(funcionario)) {
             usuarios.add(funcionario.getUser());
-            System.out.println("Funcionário cadastrado com sucesso. ID: " + funcionario.getId());
-        } else {
-            System.out.println("Não foi possível cadastrar o funcionário.");
+            return true;
         }
+
+        return false;
     }
 
     /**
-     * Remove um funcionário.
-     *
-     * <p>Apenas o nome de usuário do funcionário informado é
-     * considerado: o funcionário cadastrado com esse usuário é
-     * localizado e removido, e o usuário volta a ficar disponível. Se o
-     * parâmetro ou o seu usuário forem {@code null}, ou se nenhum
-     * funcionário com esse usuário existir, uma mensagem de erro é
-     * exibida no console.</p>
+     * Remove um funcionário pelo seu nome de usuário.
      *
      * @param funcionario funcionário a ser removido
+     * @return true se a remoção for realizada
      */
-    public void removerFuncionario(Funcionario funcionario) {
+    public boolean removerFuncionario(Funcionario funcionario) {
 
         if (funcionario == null || funcionario.getUser() == null) {
-            System.out.println("Funcionário inválido.");
-            return;
+            return false;
         }
 
-        Funcionario encontrado =
-                obterFuncionario(funcionario.getUser());
+        Funcionario encontrado = obterFuncionario(funcionario.getUser());
 
         if (encontrado != null && crud.remover(encontrado.getId())) {
             usuarios.remove(encontrado.getUser());
-            System.out.println("Funcionário removido com sucesso.");
-        } else {
-            System.out.println("Funcionário não encontrado.");
+            return true;
         }
+
+        return false;
     }
 
     /**
-     * Lê um novo valor de texto pelo terminal.
+     * Valida um novo valor para alteração.
      *
-     * <p>Exibe o prompt "Novo &lt;rótulo&gt;: " e lê uma linha, removendo
-     * os espaços do início e do fim. Se não houver mais entrada
-     * disponível, ou se o texto digitado ficar vazio, nada é
-     * alterado: no segundo caso, uma mensagem é exibida.</p>
-     *
-     * @param rotulo nome do campo a ser alterado, usado no prompt
-     *               (por exemplo, "senha" ou "e-mail")
-     * @return o texto digitado, sem espaços nas extremidades, ou
-     *         {@code null} se não houver entrada ou se o valor for vazio
+     * @param funcionario funcionário que será alterado
+     * @param novoValor novo valor informado
+     * @return valor sem espaços nas extremidades ou null
      */
-    private String lerTexto(String rotulo) {
-        System.out.print("Novo " + rotulo + ": ");
+    private String validarAlteracao(Funcionario funcionario, String novoValor) {
 
-        if (!scanner.hasNextLine()) {
+        if (funcionario == null || novoValor == null || novoValor.isBlank()) {
             return null;
         }
 
-        String texto = scanner.nextLine().trim();
-
-        if (texto.isEmpty()) {
-            System.out.println(
-                    "Valor vazio. Nada foi alterado.");
-            return null;
-        }
-
-        return texto;
+        return novoValor.trim();
     }
 
     /**
-     * Altera o nome de usuário.
+     * Altera o nome de usuário de um funcionário.
      *
-     * <p>O novo usuário é lido pelo terminal. A alteração não é feita se
-     * a entrada for vazia, se o valor for igual ao usuário atual ou se
-     * já existir outro funcionário com esse usuário. Em caso de sucesso,
-     * a lista de usuários é atualizada e os dados são gravados no
-     * JSON.</p>
-     *
-     * @param funcionario funcionário que terá o usuário alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoUser novo nome de usuário
+     * @return true se a alteração for realizada
      */
-    public void alterarUser(Funcionario funcionario) {
+    public boolean alterarUser(Funcionario funcionario, String novoUser) {
 
-        String novo = lerTexto("usuário");
+        String novo = validarAlteracao(funcionario, novoUser);
 
         if (novo == null) {
-            return;
+            return false;
         }
 
-        if (novo.equals(funcionario.getUser())) {
-            System.out.println(
-                    "O usuário informado é o mesmo. Nada foi alterado.");
-            return;
-        }
-
-        if (usuarioCadastrado(novo)) {
-            System.out.println(
-                    "Já existe um funcionário com esse usuário.");
-            return;
+        if (novo.equals(funcionario.getUser()) || usuarioCadastrado(novo)) {
+            return false;
         }
 
         usuarios.remove(funcionario.getUser());
@@ -271,183 +201,145 @@ public class GerenciarFuncionarios {
 
         salvarDados();
 
-        System.out.println("Usuário alterado com sucesso.");
+        return true;
     }
 
     /**
-     * Altera a senha de um funcionário.
-     *
-     * <p>A nova senha é lida pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON.</p>
+     * Altera a senha de um funcionário ou administrador.
      *
      * @param funcionario funcionário que terá a senha alterada
+     * @param novaSenha nova senha
+     * @return true se a alteração for realizada
      */
-    public void alterarSenha(Funcionario funcionario) {
+    public boolean alterarSenha(Funcionario funcionario, String novaSenha) {
 
-        String novo = lerTexto("senha");
+        String novo = validarAlteracao(funcionario, novaSenha);
 
-        if (novo != null) {
-            funcionario.setSenha(novo);
-            salvarDados();
-            System.out.println("Senha alterada com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setSenha(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
      * Altera o nome de um funcionário.
      *
-     * <p>O novo nome é lido pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON.</p>
-     *
-     * @param funcionario funcionário que terá o nome alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoNome novo nome
+     * @return true se a alteração for realizada
      */
-    public void alterarNome(Funcionario funcionario) {
+    public boolean alterarNome(Funcionario funcionario, String novoNome) {
 
-        String novo = lerTexto("nome");
+        String novo = validarAlteracao(funcionario, novoNome);
 
-        if (novo != null) {
-            funcionario.setNome(novo);
-            salvarDados();
-            System.out.println("Nome alterado com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setNome(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
      * Altera o cargo de um funcionário.
      *
-     * <p>O novo cargo é lido pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON.</p>
-     *
-     * @param funcionario funcionário que terá o cargo alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoCargo novo cargo
+     * @return true se a alteração for realizada
      */
-    public void alterarCargo(Funcionario funcionario) {
+    public boolean alterarCargo(Funcionario funcionario, String novoCargo) {
 
-        String novo = lerTexto("cargo");
+        String novo = validarAlteracao(funcionario, novoCargo);
 
-        if (novo != null) {
-            funcionario.setCargo(novo);
-            salvarDados();
-            System.out.println("Cargo alterado com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setCargo(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
      * Altera o CPF de um funcionário.
      *
-     * <p>O novo CPF é lido pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON. O formato do CPF não é validado.</p>
-     *
-     * @param funcionario funcionário que terá o CPF alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoCpf novo CPF
+     * @return true se a alteração for realizada
      */
-    public void alterarCpf(Funcionario funcionario) {
+    public boolean alterarCpf(Funcionario funcionario, String novoCpf) {
 
-        String novo = lerTexto("CPF");
+        String novo = validarAlteracao(funcionario, novoCpf);
 
-        if (novo != null) {
-            funcionario.setCpf(novo);
-            salvarDados();
-            System.out.println("CPF alterado com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setCpf(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
      * Altera o e-mail de um funcionário.
      *
-     * <p>O novo e-mail é lido pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON. O formato do e-mail não é validado.</p>
-     *
-     * @param funcionario funcionário que terá o e-mail alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoEmail novo e-mail
+     * @return true se a alteração for realizada
      */
-    public void alterarEmail(Funcionario funcionario) {
+    public boolean alterarEmail(Funcionario funcionario, String novoEmail) {
 
-        String novo = lerTexto("e-mail");
+        String novo = validarAlteracao(funcionario, novoEmail);
 
-        if (novo != null) {
-            funcionario.setEmail(novo);
-            salvarDados();
-            System.out.println("E-mail alterado com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setEmail(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
      * Altera o telefone de um funcionário.
      *
-     * <p>O novo telefone é lido pelo terminal. Se a entrada for vazia,
-     * nada é alterado. Em caso de sucesso, os dados são gravados no
-     * JSON. O formato do telefone não é validado.</p>
-     *
-     * @param funcionario funcionário que terá o telefone alterado
+     * @param funcionario funcionário que será alterado
+     * @param novoTelefone novo telefone
+     * @return true se a alteração for realizada
      */
-    public void alterarTelefone(Funcionario funcionario) {
+    public boolean alterarTelefone(Funcionario funcionario, String novoTelefone) {
 
-        String novo = lerTexto("telefone");
+        String novo = validarAlteracao(funcionario, novoTelefone);
 
-        if (novo != null) {
-            funcionario.setTelefone(novo);
-            salvarDados();
-            System.out.println("Telefone alterado com sucesso.");
+        if (novo == null) {
+            return false;
         }
+
+        funcionario.setTelefone(novo);
+
+        salvarDados();
+
+        return true;
     }
 
     /**
-     * Altera a senha do administrador.
+     * Retorna a lista de funcionários cadastrados.
      *
-     * <p>Se a nova senha for {@code null} ou estiver em branco, nada é
-     * alterado e uma mensagem de erro é exibida. A senha é atualizada
-     * diretamente em {@link Administrador#setSenhaAdm(String)}; este
-     * método não grava os dados de funcionários no JSON.</p>
-     *
-     * @param novaSenhaAdm nova senha do administrador
-     */
-    public void alterarSenhaAdm(String novaSenhaAdm) {
-
-        if (novaSenhaAdm == null || novaSenhaAdm.isBlank()) {
-            System.out.println(
-                    "Senha inválida. Nada foi alterado.");
-            return;
-        }
-
-        Administrador.setSenhaAdm(novaSenhaAdm);
-
-        System.out.println(
-                "Senha do administrador alterada com sucesso.");
-    }
-
-    /**
-     * Exibe todos os funcionários cadastrados no console.
-     *
-     * <p>Cada funcionário é impresso por meio de seu método
-     * {@code toString()}. Se não houver nenhum funcionário, uma mensagem
-     * informando isso é exibida.</p>
-     */
-    public void exibirFuncionarios() {
-
-        ArrayList<Funcionario> funcionarios = crud.listar();
-
-        if (funcionarios.isEmpty()) {
-            System.out.println("Nenhum funcionário cadastrado.");
-            return;
-        }
-
-        for (Funcionario f : funcionarios) {
-            System.out.println(f);
-        }
-    }
-
-    /**
-     * Retorna a lista de funcionários.
-     *
-     * <p>A lista retornada é uma cópia: adicionar ou remover itens dela
-     * não altera os dados do gerenciador. Os objetos {@link Funcionario}
-     * contidos, no entanto, são os mesmos do cadastro.</p>
-     *
-     * @return lista de funcionários cadastrados; vazia se não houver
-     *         nenhum
+     * @return lista de funcionários
      */
     public ArrayList<Funcionario> getFuncionarios() {
         return crud.listar();
@@ -456,21 +348,19 @@ public class GerenciarFuncionarios {
     /**
      * Substitui a lista de funcionários e atualiza o JSON.
      *
-     * <p>Cria um novo {@link CrudGenerico} a partir da lista recebida
-     * (que passa a ser usada diretamente, sem cópia), reconstrói a lista
-     * de nomes de usuário já utilizados e grava os dados imediatamente
-     * no arquivo JSON. Se a lista for {@code null}, nada é alterado e
-     * uma mensagem de erro é exibida.</p>
-     *
      * @param funcionarios nova lista de funcionários
+     * @return true se a substituição for realizada
      */
-    public void setFuncionarios(ArrayList<Funcionario> funcionarios) {
+    public boolean setFuncionarios(ArrayList<Funcionario> funcionarios) {
+
         if (funcionarios == null) {
-            System.out.println("Lista de funcionários inválida.");
-            return;
+            return false;
         }
 
-        crud = new CrudGenerico<>(funcionarios, FuncionarioDAO::exportarFuncionariosParaJSON);
+        crud = new CrudGenerico<>(
+                funcionarios,
+                FuncionarioDAO::exportarFuncionariosParaJSON
+        );
 
         usuarios = new ArrayList<>();
 
@@ -479,5 +369,7 @@ public class GerenciarFuncionarios {
         }
 
         salvarDados();
+
+        return true;
     }
 }

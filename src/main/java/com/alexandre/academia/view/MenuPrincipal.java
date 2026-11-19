@@ -1,7 +1,8 @@
 package com.alexandre.academia.view;
 
-import com.alexandre.academia.view.MenuLoja;
-import com.alexandre.academia.view.MenuInstrutores;
+import com.alexandre.academia.controller.GerenciarFuncionarios;
+import com.alexandre.academia.model.Administrador;
+
 import java.util.Scanner;
 
 /**
@@ -13,8 +14,12 @@ public class MenuPrincipal {
 
     private final Scanner scanner;
 
+    /** Gerenciador responsável pela autenticação dos funcionários. */
+    private final GerenciarFuncionarios gerenciadorFuncionarios;
+
     public MenuPrincipal() {
         this.scanner = new Scanner(System.in);
+        this.gerenciadorFuncionarios = new GerenciarFuncionarios();
     }
 
     /**
@@ -45,19 +50,24 @@ public class MenuPrincipal {
             }
 
             opcao = scanner.nextInt();
+            scanner.nextLine();
 
             switch (opcao) {
 
                 case 1:
-                    System.out.println("Módulo de Clientes em desenvolvimento.");
+                    System.out.println(
+                            "Módulo de Clientes em desenvolvimento."
+                    );
                     break;
 
                 case 2:
-                    System.out.println("Módulo de Funcionários em desenvolvimento.");
+                    acessarMenuFuncionarios();
                     break;
 
                 case 3:
-                    MenuInstrutores menuInstrutores = new MenuInstrutores();
+                    MenuInstrutores menuInstrutores =
+                            new MenuInstrutores();
+
                     menuInstrutores.exibir();
                     break;
 
@@ -67,11 +77,15 @@ public class MenuPrincipal {
                     break;
 
                 case 5:
-                    System.out.println("Módulo Lanchonete em desenvolvimento.");
+                    System.out.println(
+                            "Módulo Lanchonete em desenvolvimento."
+                    );
                     break;
 
                 case 6:
-                    System.out.println("Módulo Finanças em desenvolvimento.");
+                    System.out.println(
+                            "Módulo Finanças em desenvolvimento."
+                    );
                     break;
 
                 case 0:
@@ -83,5 +97,42 @@ public class MenuPrincipal {
             }
 
         } while (opcao != 0);
+    }
+
+    /**
+     * Solicita as credenciais e autentica um administrador.
+     */
+    private void acessarMenuFuncionarios() {
+
+        System.out.println("\n===== LOGIN DO ADMINISTRADOR =====");
+
+        System.out.print("Usuário: ");
+        String user = scanner.nextLine();
+
+        System.out.print("Senha: ");
+        String senha = scanner.nextLine();
+
+        Administrador administrador =
+                gerenciadorFuncionarios.autenticarAdministrador(user, senha);
+
+        if (administrador != null) {
+
+            System.out.println("\nLogin realizado com sucesso!");
+
+            MenuFuncionario menuFuncionario =
+        new MenuFuncionario(
+                scanner,
+                gerenciadorFuncionarios,
+                administrador
+        );
+
+            menuFuncionario.exibir();
+
+        } else {
+
+            System.out.println(
+                    "\nAcesso negado! Usuário ou senha inválidos."
+            );
+        }
     }
 }

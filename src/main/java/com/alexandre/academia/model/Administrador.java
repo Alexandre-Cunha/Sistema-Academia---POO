@@ -1,14 +1,14 @@
-
 package com.alexandre.academia.model;
 
 /**
  * Representa um administrador da academia.
  *
+ * Herda de Funcionario os atributos e métodos necessários
+ * para identificação e autenticação (usuário e senha).
+ *
  * @author Alexandre
  */
 public class Administrador extends Funcionario {
-
-    private static String senhaAdm = "0000";
 
     public Administrador() {
         super();
@@ -26,14 +26,6 @@ public class Administrador extends Funcionario {
                          String email, int id) {
 
         super(user, senha, cargo, nome, cpf, telefone, email, id);
-    }
-
-    public static String getSenhaAdm() {
-        return senhaAdm;
-    }
-
-    public static void setSenhaAdm(String senhaAdm) {
-        Administrador.senhaAdm = senhaAdm;
     }
 
     @Override
